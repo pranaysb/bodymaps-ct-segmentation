@@ -2,6 +2,10 @@
  * app.js - Client logic for BodyMaps CT Segmentation Viewer
  */
 
+// Theme is set synchronously in a <head> script (see index.html) to avoid a
+// flash of the wrong theme before this file even loads. This file only
+// handles the toggle button's click behavior, further down.
+
 // Application State
 const state = {
   currentCase: "BDMAP_00000338",
@@ -57,6 +61,7 @@ const accuracyTableBody = document.getElementById("accuracyTableBody");
 const btnHowItWorks = document.getElementById("btnHowItWorks");
 const btnCloseHowItWorks = document.getElementById("btnCloseHowItWorks");
 const howItWorksBackdrop = document.getElementById("howItWorksBackdrop");
+const btnThemeToggle = document.getElementById("btnThemeToggle");
 
 // Initialize application
 document.addEventListener("DOMContentLoaded", () => {
@@ -268,8 +273,13 @@ function renderOrganList(organs) {
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = state.activeOrgans.includes(organ.id);
-    cb.addEventListener("change", (e) => {
-      e.stopPropagation();
+    // Clicking the checkbox fires both its own "click" (which bubbles to the
+    // row's click handler below) and a "change" event. Without stopping the
+    // click from bubbling, the row handler would immediately flip cb.checked
+    // back, silently cancelling every toggle -- which is exactly what made
+    // individual checkboxes and "Toggle All" appear to do nothing.
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
       toggleOrgan(organ.id, cb.checked);
     });
 
@@ -471,6 +481,14 @@ function setupEvents() {
   });
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") howItWorksBackdrop.classList.remove("open");
+  });
+
+  // Theme toggle
+  btnThemeToggle.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    const next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
   });
 }
 

@@ -4,8 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BodyMaps AI — 3D CT Organ Segmentation (SuPreM)</title>
+  <script>
+    // Runs synchronously before first paint so there's no flash of the wrong
+    // theme. Default is light unless the user has explicitly toggled before.
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("theme") || "light");
+  </script>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩻</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%235b9dff'/><text x='16' y='22' font-family='Arial,sans-serif' font-size='17' font-weight='700' fill='%2306111f' text-anchor='middle'>B</text></svg>">
 </head>
 <body>
 
@@ -19,12 +24,16 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="btn-howitworks" id="btnHowItWorks">ⓘ How this works</button>
+      <button class="btn-howitworks" id="btnHowItWorks">How this works</button>
       <span id="hardwareBadge" class="badge badge-info">Checking hardware…</span>
       <a href="/docs" target="_blank" class="badge badge-muted">API Docs</a>
       <a href="bodymaps_colab_inference.ipynb" download id="colabBtn" target="_blank" class="btn-colab">
-        <span>⚡ Colab Notebook (GPU)</span>
+        Colab Notebook (GPU)
       </a>
+      <button class="btn-theme" id="btnThemeToggle" aria-label="Toggle light/dark theme" title="Toggle light/dark theme">
+        <svg id="iconSun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg id="iconMoon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -37,7 +46,7 @@
   <!-- Error banner (hidden unless something actually fails) -->
   <div class="error-banner" id="errorBanner">
     <span id="errorBannerText"></span>
-    <button id="btnDismissError" aria-label="Dismiss">✕</button>
+    <button id="btnDismissError" aria-label="Dismiss">&times;</button>
   </div>
 
   <!-- Main Container -->
@@ -124,7 +133,7 @@
 
         <!-- Inference Button -->
         <button class="btn-infer" id="btnRunInfer">
-          <span>⚡ Run SuPreM Segmentation</span>
+          <span>Run SuPreM Segmentation</span>
         </button>
         <p id="inferStatusText" class="infer-status-text"></p>
         <p id="inferProvenanceText" class="infer-provenance-text"></p>
@@ -174,7 +183,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h2>How this works</h2>
-        <button id="btnCloseHowItWorks" aria-label="Close">✕</button>
+        <button id="btnCloseHowItWorks" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
         <h3>What's pre-loaded (not computed by this app)</h3>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyMaps AI — 3D CT Organ Segmentation (SuPreM)</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩻</text></svg>">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="logo-badge">BodyMaps</div>
+      <div class="brand-text">
+        <h1>3D CT Organ Segmentation</h1>
+        <p>SuPreM Pre-trained UNet · Johns Hopkins University (CCVL)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-howitworks" id="btnHowItWorks">ⓘ How this works</button>
+      <span id="hardwareBadge" class="badge badge-info">Checking hardware…</span>
+      <a href="/docs" target="_blank" class="badge badge-muted">API Docs</a>
+      <a href="bodymaps_colab_inference.ipynb" download id="colabBtn" target="_blank" class="btn-colab">
+        <span>⚡ Colab Notebook (GPU)</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Global status ribbon: what you are looking at, in plain language -->
+  <div class="status-ribbon" id="statusRibbon">
+    <span class="status-ribbon-dot" id="statusRibbonDot"></span>
+    <span id="statusRibbonText">Loading case status…</span>
+  </div>
+
+  <!-- Error banner (hidden unless something actually fails) -->
+  <div class="error-banner" id="errorBanner" style="display:none;">
+    <span id="errorBannerText"></span>
+    <button id="btnDismissError" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Left: 2D Multiplanar CT Viewer -->
+    <section class="viewer-card">
+      <div class="viewer-header">
+        <div class="tabs">
+          <button class="tab-btn active" data-orient="axial">Axial (Z)</button>
+          <button class="tab-btn" data-orient="coronal">Coronal (Y)</button>
+          <button class="tab-btn" data-orient="sagittal">Sagittal (X)</button>
+        </div>
+        <div class="window-presets">
+          <span>Window:</span>
+          <button class="preset-btn active" data-window="abdomen">Abdomen</button>
+          <button class="preset-btn" data-window="soft_tissue">Soft Tissue</button>
+          <button class="preset-btn" data-window="bone">Bone</button>
+          <button class="preset-btn" data-window="lung">Lung</button>
+        </div>
+      </div>
+
+      <!-- Viewport Display -->
+      <div class="viewport-container" id="viewport">
+        <img id="sliceImage" alt="CT Slice" />
+
+        <div class="viewport-overlay" id="overlayTopLeft">
+          <div><strong id="displayCaseId">—</strong></div>
+          <div id="displaySlice">Axial Slice: — / —</div>
+          <div id="displayDim">— × — px</div>
+        </div>
+
+        <div class="viewport-overlay-right" id="overlayTopRight">
+          <div id="displayWindow">W: 400  L: 40</div>
+          <div id="displayDice" style="display:none;">Mean Dice: —</div>
+        </div>
+
+        <div class="viewport-overlay-bottom-left" id="overlayBottomLeft">
+          <div id="displaySpacing">Spacing: — mm</div>
+        </div>
+
+        <div class="loading-spinner" id="spinner">
+          <div class="spinner"></div>
+          <p id="spinnerText">Loading slice...</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="viewer-controls">
+        <div class="slider-row">
+          <label>Slice:</label>
+          <button class="slice-btn" id="btnPrevSlice">◄</button>
+          <input type="range" id="sliceSlider" min="0" max="70" value="35" />
+          <button class="slice-btn" id="btnNextSlice">►</button>
+          <span id="sliceVal" style="min-width: 45px; font-family: monospace; font-size: 13px;">35</span>
+        </div>
+
+        <div class="slider-row">
+          <label>Opacity:</label>
+          <input type="range" id="opacitySlider" min="0" max="100" value="55" />
+          <span id="opacityVal" style="min-width: 45px; font-family: monospace; font-size: 13px;">55%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Case Selection & Organ Analytics -->
+    <aside class="sidebar">
+
+      <!-- Case Selector & Upload -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span>CT Scan Case</span>
+        </div>
+
+        <select class="case-select" id="caseSelect">
+          <option value="BDMAP_00000338">BDMAP_00000338 (Benchmark Sample)</option>
+        </select>
+
+        <div class="upload-box" id="uploadDropZone">
+          <strong>+ Upload Custom CT</strong>
+          <p>Drag & drop or click (.nii.gz, .nii)</p>
+          <input type="file" id="fileInput" accept=".nii,.nii.gz" style="display: none;" />
+        </div>
+
+        <!-- Inference Button -->
+        <button class="btn-infer" id="btnRunInfer">
+          <span>⚡ Run SuPreM Segmentation</span>
+        </button>
+        <p id="inferStatusText" class="infer-status-text"></p>
+        <p id="inferProvenanceText" class="infer-provenance-text"></p>
+      </div>
+
+      <!-- Organ Segmentation Palette -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span>Segmented Organs (9)</span>
+          <button class="slice-btn" id="btnToggleAll" style="font-size: 11px;">Toggle All</button>
+        </div>
+
+        <div class="organ-list" id="organList">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Downloads -->
+        <div class="download-row">
+          <a href="#" id="btnDownloadNii" class="btn-download" target="_blank">Download .NII.GZ</a>
+          <a href="#" id="btnDownloadZip" class="btn-download" target="_blank">Download .ZIP</a>
+        </div>
+      </div>
+
+      <!-- Accuracy vs Ground Truth (only shown when a real, independent ground-truth file exists) -->
+      <div class="panel-card" id="accuracyPanel" style="display:none;">
+        <div class="panel-title">
+          <span>Accuracy vs Ground Truth</span>
+        </div>
+        <p class="accuracy-caption">
+          Dice similarity between the current prediction and the case's independently
+          stored ground-truth segmentation. Computed directly from both volumes — not a fixed number.
+        </p>
+        <table class="accuracy-table" id="accuracyTable">
+          <thead>
+            <tr><th>Organ</th><th>Pred (mL)</th><th>GT (mL)</th><th>Dice</th></tr>
+          </thead>
+          <tbody id="accuracyTableBody"></tbody>
+        </table>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- How This Works modal -->
+  <div class="modal-backdrop" id="howItWorksBackdrop" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>How this works</h2>
+        <button id="btnCloseHowItWorks" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <h3>What's pre-loaded (not computed by this app)</h3>
+        <ul>
+          <li>The bundled CT scan <code>BDMAP_00000338</code> — a real JHU BodyMaps benchmark case shipped with the app.</li>
+          <li>Its <strong>ground-truth segmentation</strong> — the human/reference-annotated organ masks that ship with the benchmark case, stored separately from any model prediction so scoring can never compare a prediction against itself.</li>
+        </ul>
+
+        <h3>What's live-computed</h3>
+        <ul>
+          <li>Clicking <strong>"Run SuPreM Segmentation"</strong> runs the actual SuPreM 3D UNet
+            (sliding-window inference, 96³ ROI patches) on whatever compute device this
+            server detects — shown at all times in the hardware badge at the top of the page.
+            There is no shortcut or simulated mode: a slow run is a real run.</li>
+          <li>The <strong>Dice scores</strong> shown per organ and as "Mean Dice" are computed
+            fresh from the actual predicted mask vs. the actual ground-truth mask every time
+            you load this page or re-run inference. They are not hardcoded.</li>
+          <li>Uploaded scans have no ground truth available, so no Dice/accuracy numbers are
+            shown for them — only the predicted segmentation itself.</li>
+        </ul>
+
+        <h3>Reading the hardware badge</h3>
+        <ul>
+          <li><span class="legend-dot legend-green"></span> <strong>GPU accelerated</strong> (CUDA or Apple Silicon MPS) — much faster than CPU; see the README's benchmark section for an actual measured run and timing.</li>
+          <li><span class="legend-dot legend-amber"></span> <strong>CPU only</strong> — inference still runs for real, but is much slower; you'll be asked to confirm before a CPU run starts.</li>
+        </ul>
+
+        <h3>Reproducing results independently</h3>
+        <p>The bundled <code>bodymaps_colab_inference.ipynb</code> runs the identical model and
+          preprocessing pipeline standalone on a free Google Colab GPU, for anyone who wants to
+          verify these numbers outside this web app.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -68,11 +68,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function showError(message) {
   errorBannerText.textContent = message;
-  errorBanner.style.display = "flex";
+  errorBanner.classList.remove("show");
+  // restart the entrance animation even if a previous error is already showing
+  void errorBanner.offsetWidth;
+  errorBanner.classList.add("show");
 }
 
 function hideError() {
-  errorBanner.style.display = "none";
+  errorBanner.classList.remove("show");
 }
 
 function setStatusRibbon(kind, text) {
@@ -208,9 +211,12 @@ function renderAccuracyPanel(meta) {
   }
   accuracyPanel.style.display = "block";
   accuracyTableBody.innerHTML = "";
+  let rowIndex = 0;
   (meta.organs || []).forEach((organ) => {
     if (!organ.present || organ.dice == null) return;
     const tr = document.createElement("tr");
+    tr.style.animationDelay = `${rowIndex * 35}ms`;
+    rowIndex++;
     tr.innerHTML = `
       <td>${organ.label}</td>
       <td>${organ.volume_ml != null ? organ.volume_ml.toFixed(1) : "—"}</td>
@@ -241,14 +247,20 @@ function updateSliceView() {
   const organsParam = state.activeOrgans.join(",");
   const url = `/api/case/${state.currentCase}/slice/${state.sliceIdx}?orientation=${state.orientation}&window=${state.windowPreset}&opacity=${state.opacity}&organs=${organsParam}`;
 
+  sliceImg.classList.add("is-loading");
   sliceImg.src = url;
 }
 
+sliceImg.addEventListener("load", () => {
+  sliceImg.classList.remove("is-loading");
+});
+
 function renderOrganList(organs) {
   organList.innerHTML = "";
-  organs.forEach((organ) => {
+  organs.forEach((organ, index) => {
     const item = document.createElement("div");
     item.className = "organ-item";
+    item.style.animationDelay = `${index * 30}ms`;
 
     const left = document.createElement("div");
     left.className = "organ-left";
@@ -449,13 +461,16 @@ function setupEvents() {
 
   // How This Works modal
   btnHowItWorks.addEventListener("click", () => {
-    howItWorksBackdrop.style.display = "flex";
+    howItWorksBackdrop.classList.add("open");
   });
   btnCloseHowItWorks.addEventListener("click", () => {
-    howItWorksBackdrop.style.display = "none";
+    howItWorksBackdrop.classList.remove("open");
   });
   howItWorksBackdrop.addEventListener("click", (e) => {
-    if (e.target === howItWorksBackdrop) howItWorksBackdrop.style.display = "none";
+    if (e.target === howItWorksBackdrop) howItWorksBackdrop.classList.remove("open");
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") howItWorksBackdrop.classList.remove("open");
   });
 }
 
@@ -543,9 +558,9 @@ function runInference(caseId, confirmSlow) {
 
 function showSpinner(text) {
   spinnerText.textContent = text;
-  spinner.style.display = "flex";
+  spinner.classList.add("show");
 }
 
 function hideSpinner() {
-  spinner.style.display = "none";
+  spinner.classList.remove("show");
 }

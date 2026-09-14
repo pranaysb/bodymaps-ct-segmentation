@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 [![SuPreM](https://img.shields.io/badge/Model-SuPreM%20UNet%20(ICLR%202024)-orange.svg)](https://github.com/MrGiovanni/SuPreM)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](bodymaps_colab_inference.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pranaysb/bodymaps-ct-segmentation/blob/main/bodymaps_colab_inference.ipynb)
 
 A lightweight, responsive web application for automated 3D abdominal organ segmentation on CT scans. Developed for the **Johns Hopkins University BodyMaps Developer Program** (Prof. Zongwei Zhou & Prof. Alan Yuille, CCVL Research Group).
 

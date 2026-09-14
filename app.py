@@ -208,12 +208,17 @@ def get_slice_image(
     """Renders a 2D CT slice with color organ overlays."""
     load_case_into_cache(case_id)
     
+    # Distinguish "no filter given at all" (organs is None -> show every organ,
+    # the default) from "filter given but empty" (organs == "" -> show none).
+    # Treating both the same way was a real bug: toggling every organ off in the
+    # UI sent organs="", which a truthiness check silently ignored, so it kept
+    # rendering all organs instead of none.
     active_organs = None
-    if organs:
+    if organs is not None:
         try:
             active_organs = [int(x.strip()) for x in organs.split(",") if x.strip()]
         except ValueError:
-            pass
+            active_organs = []
 
     png_bytes = ie.render_slice_png(
         ct_data=ie.volume_cache.ct_data,

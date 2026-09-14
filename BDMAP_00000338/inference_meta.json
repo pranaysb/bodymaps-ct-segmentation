@@ -1,0 +1,8 @@
+{
+  "device": "mps",
+  "device_label": "Apple Silicon GPU (Metal/MPS)",
+  "elapsed_seconds": 700.41,
+  "overlap": 0.5,
+  "computed_at_utc": "2026-09-13T18:13:17+00:00",
+  "checkpoint": "supervised_suprem_unet_2100.pth"
+}

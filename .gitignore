@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# External model repo (cloned separately, see README setup instructions) —
+# not vendored here since it's a large third-party codebase with its own license.
+SuPreM/
+
+# Model weights (233MB, downloaded separately, see README)
+*.pth
+
+# Runtime artifacts
+uploads/*
+!uploads/.gitkeep
+_server_log.txt
+*.log
+
+# Raw download artifact (already extracted into BDMAP_00000338/, kept for the repo)
+BDMAP_00000338.zip
+
+# Private working notes (not part of the app)
+prompt.md
+
+# OS
+.DS_Store

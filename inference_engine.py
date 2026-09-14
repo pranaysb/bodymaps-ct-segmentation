@@ -295,6 +295,14 @@ def run_live_inference(
     start_time = time.time()
     os.makedirs(output_dir, exist_ok=True)
 
+    # Sweep up any staging directory orphaned by a previous run that was
+    # killed outright (process crash, container restart) rather than raising
+    # a normal Python exception -- the finally block below only runs in the
+    # latter case.
+    for entry in os.listdir(output_dir):
+        if entry.startswith(".inference_staging_"):
+            shutil.rmtree(os.path.join(output_dir, entry), ignore_errors=True)
+
     # Stage outputs in a temp directory and only move them into place once the
     # full run succeeds, so a failure partway through never leaves a case with
     # a half-written / corrupted segmentation result.
